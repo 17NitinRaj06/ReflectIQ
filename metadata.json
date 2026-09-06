@@ -1,0 +1,7 @@
+{
+  "name": "ReflectIQ",
+  "description": "Personal reflection intelligence platform for journaling, pattern discovery, and grounded self-inquiry.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

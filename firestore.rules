@@ -1,0 +1,73 @@
+rules_version = '2';
+
+// ReflectIQ Firestore Security Rules
+// Authorization Model:
+// 1. Default Deny: All document paths outside /users/{uid}/ are strictly forbidden.
+// 2. Strict User Isolation: Every subcollection under /users/{uid}/ requires an authenticated
+//    request where the caller's Firebase Auth UID matches the document path UID (request.auth.uid == uid).
+// 3. No Broad Rules: Access is never granted to unauthenticated callers or arbitrary logged-in users.
+// 4. Data Protection: Prevents cross-tenant reads, writes, and unauthorized enumeration.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Root user document - only accessible by the owner
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      // Journals subcollection: user's reflection sessions
+      match /journals/{journalId} {
+        allow read, write: if isOwner(uid);
+
+        // Individual messages within a reflection session
+        match /messages/{messageId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+
+      // Goals subcollection: user-defined & AI-suggested confirmed goals
+      match /goals/{goalId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Insights subcollection: detected patterns, themes, shifts
+      match /insights/{insightId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Actions subcollection: extracted concrete tasks
+      match /actions/{actionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Memories subcollection: user approved AI memory candidates
+      match /memories/{memoryId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Weekly reviews subcollection: synthesized weekly summaries
+      match /weeklyReviews/{reviewId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Semantic vector embeddings cache collection for RAG similarity search
+      match /vectors/{vectorId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Explicitly reject any access to collections outside the user hierarchy
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
